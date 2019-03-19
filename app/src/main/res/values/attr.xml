@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="BarChartView">
+        <attr name="subjectNames" format="reference"/>
+        <attr name="finalNums" format="reference"/>
+        <attr name="colors" format="reference"/>
+        <attr name="max" format="integer"/>
+        <attr name="time" format="integer"/>
+    </declare-styleable>
+
+    <declare-styleable name="SlideCardViews">
+        <attr name="layout" format="reference"/>
+        <attr name="actionTime" format="float"/>
+    </declare-styleable>
+
+    <declare-styleable name="RectProcessView">
+        <attr name="number" format="integer"/>
+        <attr name="processColor" format="reference"/>
+        <attr name="processNumber" format="reference"/>
+        <attr name="times" format="integer"/>
+        <attr name="maxNum" format="integer"/>
+        <attr name="subjectName" format="reference"/>
+    </declare-styleable>
+</resources>
