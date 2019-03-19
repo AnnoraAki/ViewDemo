@@ -22,29 +22,31 @@
 
         <android.support.v7.widget.CardView
                 android:id="@+id/topCard"
-                android:layout_width="300dp"
-                android:layout_height="50dp">
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
 
             <TextView
                     android:id="@+id/tv_content1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="你好啊，这个是一个测试的item1~"
-                    android:padding="10dp"/>
+                    android:padding="20dp"
+                    />
 
         </android.support.v7.widget.CardView>
 
         <android.support.v7.widget.CardView
                 android:id="@+id/bottomCard"
-                android:layout_width="300dp"
-                android:layout_height="50dp">
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
 
             <TextView
                     android:id="@+id/tv_content2"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="你好啊，这个是一个测试的item2~"
-                    android:padding="10dp"/>
+                    android:padding="20dp"
+                    />
 
         </android.support.v7.widget.CardView>
 
