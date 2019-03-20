@@ -1,4 +1,4 @@
-package com.cynthia.viewdemo;
+package com.cynthia.viewdemo.widget;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
@@ -13,6 +13,7 @@ import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.animation.LinearInterpolator;
+import com.cynthia.viewdemo.R;
 
 
 /**

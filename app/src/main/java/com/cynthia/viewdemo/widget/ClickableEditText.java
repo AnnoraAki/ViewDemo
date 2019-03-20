@@ -1,4 +1,4 @@
-package com.cynthia.viewdemo;
+package com.cynthia.viewdemo.widget;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
