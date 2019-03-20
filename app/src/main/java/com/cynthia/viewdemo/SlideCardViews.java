@@ -5,6 +5,8 @@ import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Color;
+import android.support.v7.widget.CardView;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -18,14 +20,12 @@ public class SlideCardViews extends FrameLayout {
 
     private float actionTime;
     private float x1 = 0f;
-    private int[] baseBottom = {-1, -1, -1, -1};
-    private View top;
 
-    private ObjectAnimator animatorLeft;
-    private ObjectAnimator animatorRight;
-    private ObjectAnimator animatorUp;
+    private CardView top;
+    private CardView bottom;
+    private CardView translation;
+
     private ObjectAnimator.AnimatorListener animatorEndListener;
-    private ObjectAnimator.AnimatorListener animatorUpEndListener;
 
     public SlideCardViews(Context context) {
         this(context, null);
@@ -37,7 +37,7 @@ public class SlideCardViews extends FrameLayout {
 
     public SlideCardViews(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        initAttrs(attrs);
+        init(attrs);
         animatorEndListener = new Animator.AnimatorListener() {
             @Override
             public void onAnimationStart(Animator animation) {
@@ -45,11 +45,7 @@ public class SlideCardViews extends FrameLayout {
 
             @Override
             public void onAnimationEnd(Animator animation) {
-                View bottom = getChildAt(0);
-                top.setVisibility(INVISIBLE);
-                bringChildToFront(bottom);
-                postInvalidate();
-                top.setVisibility(VISIBLE);
+                returnBack();
             }
 
             @Override
@@ -60,33 +56,41 @@ public class SlideCardViews extends FrameLayout {
             public void onAnimationRepeat(Animator animation) {
             }
         };
-        animatorUpEndListener = new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animation) {
 
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                animation.cancel();
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animation) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-
-            }
-        };
     }
 
-    private void initAttrs(AttributeSet attrs) {
+    private void returnBack() {
+        removeAllViews();
+        CardView temp = top;
+        top = bottom;
+        bottom = translation;
+        translation = temp;
+        addView(translation);
+        addView(bottom);
+        addView(top);
+        for (int i = 0; i < getChildCount(); i++) {
+            View view = getChildAt(i);
+            view.setTranslationY(0);
+            view.setTranslationX(0);
+        }
+        requestLayout();
+    }
+
+    private void init(AttributeSet attrs) {
         TypedArray ta = getContext().obtainStyledAttributes(attrs, R.styleable.SlideCardViews);
         actionTime = ta.getFloat(R.styleable.SlideCardViews_actionTime, 1);
         ta.recycle();
+        FrameLayout.LayoutParams layoutParams = new LayoutParams(300, 150);
+        top = new CardView(getContext());
+        bottom = new CardView(getContext());
+        translation = new CardView(getContext());
+        addView(translation, layoutParams);
+        addView(bottom, layoutParams);
+        addView(top, layoutParams);
+
+        top.setCardBackgroundColor(Color.LTGRAY);
+        bottom.setCardBackgroundColor(Color.BLUE);
+        translation.setCardBackgroundColor(Color.CYAN);
     }
 
     // 还是默认的march_parent，不知道为什么获取的子view的宽高不是预期值.jpg
@@ -95,6 +99,8 @@ public class SlideCardViews extends FrameLayout {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         measureChildren(widthMeasureSpec, heightMeasureSpec);
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+
+
 //        int width = getChildAt(0).getMeasuredWidth();
 //        int height = getChildAt(0).getMeasuredHeight();
 //        int offset = getChildCount() * 20;
@@ -103,14 +109,15 @@ public class SlideCardViews extends FrameLayout {
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        top = getChildAt(1);
         int vertical = 0;
         int across = 0;
         for (int i = 0; i < getChildCount(); i++) {
             View view = getChildAt(i);
             view.layout(l + across, t + vertical, view.getMeasuredWidth() + across, view.getMeasuredHeight() + vertical);
-            vertical -= 20;
-            across -= 20;
+            if (i == 1) {
+                vertical -= 20;
+                across -= 20;
+            }
         }
     }
 
@@ -119,6 +126,7 @@ public class SlideCardViews extends FrameLayout {
         if (ev.getAction() == MotionEvent.ACTION_DOWN) {
             if (isInCard(ev.getX(), ev.getY())) {
                 x1 = ev.getX();
+//              事件分发与拦截
                 return true;
             }
         } else if (ev.getAction() == MotionEvent.ACTION_MOVE) {
@@ -139,28 +147,27 @@ public class SlideCardViews extends FrameLayout {
     }
 
     private void startAnim(boolean isLeft) {
-        View bottom = getChildAt(0);
-        if (baseBottom[0] != -1) {
-            baseBottom[0] = bottom.getLeft();
-            baseBottom[1] = bottom.getTop();
-            baseBottom[2] = bottom.getRight();
-            baseBottom[3] = bottom.getBottom();
-        }
         if (isLeft) {
-            animatorLeft = ObjectAnimator.ofFloat(top, "translationX", top.getLeft(), -top.getWidth());
+            ObjectAnimator animatorLeft = ObjectAnimator.ofFloat(top, "translationX", 0, -getContext().getResources().getDisplayMetrics().widthPixels);
             animatorLeft.setDuration((long) (actionTime * 1000));
             animatorLeft.start();
-            animatorLeft.addListener(animatorEndListener);
         } else {
-            animatorRight = ObjectAnimator.ofFloat(top, "translationX", top.getLeft(), getContext().getResources().getDisplayMetrics().widthPixels);
+            ObjectAnimator animatorRight = ObjectAnimator.ofFloat(top, "translationX", 0, getContext().getResources().getDisplayMetrics().widthPixels);
             animatorRight.setDuration((long) (actionTime * 1000));
             animatorRight.start();
-            animatorRight.addListener(animatorEndListener);
         }
-        PropertyValuesHolder upX = PropertyValuesHolder.ofFloat("translationX", bottom.getLeft(), bottom.getLeft() - 20);
-        PropertyValuesHolder upY = PropertyValuesHolder.ofFloat("translationY", bottom.getTop(), bottom.getTop() - 20);
-        animatorUp = ObjectAnimator.ofPropertyValuesHolder(bottom, upX, upY).setDuration((long) (actionTime * 1000));
+        PropertyValuesHolder upX = PropertyValuesHolder.ofFloat("translationX", 0, -20);
+        PropertyValuesHolder upY = PropertyValuesHolder.ofFloat("translationY", 0, -20);
+
+        ObjectAnimator animatorUp = ObjectAnimator.ofPropertyValuesHolder(bottom, upX, upY)
+                .setDuration((long) (actionTime * 1000));
+        animatorUp.setStartDelay((long) (actionTime * 100));
+        animatorUp.addListener(animatorEndListener);
         animatorUp.start();
-        animatorUp.addListener(animatorUpEndListener);
+
+        ObjectAnimator animatorShow = ObjectAnimator.ofFloat(translation, "alpha", 0f, 1f)
+                .setDuration((long) (actionTime * 1000));
+        animatorShow.setStartDelay((long) (actionTime * 100));
+        animatorShow.start();
     }
 }
