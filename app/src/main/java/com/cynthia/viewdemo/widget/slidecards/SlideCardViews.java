@@ -1,4 +1,4 @@
-package com.cynthia.viewdemo;
+package com.cynthia.viewdemo.widget.slidecards;
 
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
@@ -11,6 +11,7 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
+import com.cynthia.viewdemo.R;
 
 /**
  * Created by Cchanges on 2019/3/19
@@ -26,6 +27,9 @@ public class SlideCardViews extends FrameLayout {
     private CardView translation;
 
     private ObjectAnimator.AnimatorListener animatorEndListener;
+
+    private SlideInterface slideInterface;
+    private SlideViewHolder holder;
 
     public SlideCardViews(Context context) {
         this(context, null);
@@ -56,15 +60,17 @@ public class SlideCardViews extends FrameLayout {
             public void onAnimationRepeat(Animator animation) {
             }
         };
-
+        addCards();
     }
 
     private void returnBack() {
         removeAllViews();
         CardView temp = top;
+//        slideInterface.bindData(holder);
         top = bottom;
         bottom = translation;
         translation = temp;
+        translation.setAlpha(0f);
         addView(translation);
         addView(bottom);
         addView(top);
@@ -80,31 +86,36 @@ public class SlideCardViews extends FrameLayout {
         TypedArray ta = getContext().obtainStyledAttributes(attrs, R.styleable.SlideCardViews);
         actionTime = ta.getFloat(R.styleable.SlideCardViews_actionTime, 1);
         ta.recycle();
-        FrameLayout.LayoutParams layoutParams = new LayoutParams(300, 150);
-        top = new CardView(getContext());
-        bottom = new CardView(getContext());
-        translation = new CardView(getContext());
-        addView(translation, layoutParams);
-        addView(bottom, layoutParams);
-        addView(top, layoutParams);
-
-        top.setCardBackgroundColor(Color.LTGRAY);
-        bottom.setCardBackgroundColor(Color.BLUE);
-        translation.setCardBackgroundColor(Color.CYAN);
     }
 
-    // 还是默认的march_parent，不知道为什么获取的子view的宽高不是预期值.jpg
+    // 还是默认的march_parent
     // todo 解决测量的bug
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         measureChildren(widthMeasureSpec, heightMeasureSpec);
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.AT_MOST) {
+            int width = (int) (getChildAt(0).getMeasuredWidth() * 1.5f + getChildCount() * 20);
+            int height = (int) (getChildAt(0).getMeasuredHeight() * 1.5f + getChildCount() * 20);
+            width = width > getContext().getResources().getDisplayMetrics().widthPixels ? getContext().getResources().getDisplayMetrics().widthPixels : width;
+            height = height > getContext().getResources().getDisplayMetrics().heightPixels ? getContext().getResources().getDisplayMetrics().heightPixels : height;
+            setMeasuredDimension(width, height);
+        }
+    }
 
+    private void addCards() {
+//        holder = slideInterface.initLayout(this);
+        LayoutParams lp = new FrameLayout.LayoutParams(500, 150);
+        top = new CardView(getContext());
+        bottom = new CardView(getContext());
+        translation = new CardView(getContext());
+        addView(translation, lp);
+        addView(bottom, lp);
+        addView(top, lp);
 
-//        int width = getChildAt(0).getMeasuredWidth();
-//        int height = getChildAt(0).getMeasuredHeight();
-//        int offset = getChildCount() * 20;
-
+        top.setCardBackgroundColor(Color.CYAN);
+        bottom.setCardBackgroundColor(Color.LTGRAY);
+        translation.setCardBackgroundColor(Color.BLUE);
     }
 
     @Override
@@ -169,5 +180,9 @@ public class SlideCardViews extends FrameLayout {
                 .setDuration((long) (actionTime * 1000));
         animatorShow.setStartDelay((long) (actionTime * 100));
         animatorShow.start();
+    }
+
+    public void setHelper(SlideInterface slideInterface) {
+        this.slideInterface = slideInterface;
     }
 }
