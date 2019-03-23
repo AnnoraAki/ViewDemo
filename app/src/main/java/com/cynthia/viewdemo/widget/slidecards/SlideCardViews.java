@@ -8,6 +8,7 @@ import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.support.v7.widget.CardView;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -21,15 +22,13 @@ public class SlideCardViews extends FrameLayout {
 
     private float actionTime;
     private float x1 = 0f;
+    private boolean isStart = false;
 
     private CardView top;
     private CardView bottom;
     private CardView translation;
 
     private ObjectAnimator.AnimatorListener animatorEndListener;
-
-    private SlideInterface slideInterface;
-    private SlideViewHolder holder;
 
     public SlideCardViews(Context context) {
         this(context, null);
@@ -50,6 +49,7 @@ public class SlideCardViews extends FrameLayout {
             @Override
             public void onAnimationEnd(Animator animation) {
                 returnBack();
+                isStart = false;
             }
 
             @Override
@@ -88,24 +88,22 @@ public class SlideCardViews extends FrameLayout {
         ta.recycle();
     }
 
-    // 还是默认的march_parent
-    // todo 解决测量的bug
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        measureChildren(widthMeasureSpec, heightMeasureSpec);
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.AT_MOST) {
-            int width = (int) (getChildAt(0).getMeasuredWidth() * 1.5f + getChildCount() * 20);
-            int height = (int) (getChildAt(0).getMeasuredHeight() * 1.5f + getChildCount() * 20);
-            width = width > getContext().getResources().getDisplayMetrics().widthPixels ? getContext().getResources().getDisplayMetrics().widthPixels : width;
-            height = height > getContext().getResources().getDisplayMetrics().heightPixels ? getContext().getResources().getDisplayMetrics().heightPixels : height;
-            setMeasuredDimension(width, height);
-        }
+        int width = getContext().getResources().getDisplayMetrics().widthPixels;
+        int height = (getChildAt(0).getMeasuredHeight() * 2 + getChildCount() * 20);
+        height = height > getContext().getResources().getDisplayMetrics().heightPixels ? getContext().getResources().getDisplayMetrics().heightPixels : height;
+        setMeasuredDimension(width, height);
+        measureChildren(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));
     }
 
+    /**
+     * 初始化Card
+     */
     private void addCards() {
-//        holder = slideInterface.initLayout(this);
         LayoutParams lp = new FrameLayout.LayoutParams(500, 150);
+        lp.gravity = Gravity.CENTER_VERTICAL;
         top = new CardView(getContext());
         bottom = new CardView(getContext());
         translation = new CardView(getContext());
@@ -124,7 +122,16 @@ public class SlideCardViews extends FrameLayout {
         int across = 0;
         for (int i = 0; i < getChildCount(); i++) {
             View view = getChildAt(i);
-            view.layout(l + across, t + vertical, view.getMeasuredWidth() + across, view.getMeasuredHeight() + vertical);
+            MarginLayoutParams lp = (MarginLayoutParams) view.getLayoutParams();
+            int width = view.getMeasuredWidth();
+            int height = view.getMeasuredHeight();
+            int left = (getMeasuredWidth() - width) / 2;
+            int top = (getMeasuredHeight() - height) / 2;
+//          传入的是相对于父容器的位置
+            view.layout(lp.leftMargin + across + left,
+                    lp.topMargin + vertical + top,
+                    lp.leftMargin + width + across + left,
+                    lp.topMargin + height + vertical + top);
             if (i == 1) {
                 vertical -= 20;
                 across -= 20;
@@ -132,12 +139,14 @@ public class SlideCardViews extends FrameLayout {
         }
     }
 
+    /**
+     * 根据传入的点击事件进行判断并进行拦截（下节课的内容）
+     */
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         if (ev.getAction() == MotionEvent.ACTION_DOWN) {
             if (isInCard(ev.getX(), ev.getY())) {
                 x1 = ev.getX();
-//              事件分发与拦截
                 return true;
             }
         } else if (ev.getAction() == MotionEvent.ACTION_MOVE) {
@@ -153,11 +162,23 @@ public class SlideCardViews extends FrameLayout {
         return super.dispatchTouchEvent(ev);
     }
 
+    /**
+     * 判断点击的坐标是否在顶部
+     */
     private boolean isInCard(float x, float y) {
         return top.getLeft() < x && x < top.getRight() && top.getTop() < y && y < top.getBottom();
     }
 
+    /**
+     * 根据滑动方向开始动画
+     *
+     * @param isLeft 方向是否为左
+     */
     private void startAnim(boolean isLeft) {
+//      动画未结束就直接返回
+        if (isStart) {
+            return;
+        }
         if (isLeft) {
             ObjectAnimator animatorLeft = ObjectAnimator.ofFloat(top, "translationX", 0, -getContext().getResources().getDisplayMetrics().widthPixels);
             animatorLeft.setDuration((long) (actionTime * 1000));
@@ -180,9 +201,6 @@ public class SlideCardViews extends FrameLayout {
                 .setDuration((long) (actionTime * 1000));
         animatorShow.setStartDelay((long) (actionTime * 100));
         animatorShow.start();
-    }
-
-    public void setHelper(SlideInterface slideInterface) {
-        this.slideInterface = slideInterface;
+        isStart = true;
     }
 }
